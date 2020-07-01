@@ -6,8 +6,33 @@
 # at VIVES University College.
 # https://github.com/Reavershark
 
-BROKER="localhost"
-TOPIC="network/devices/detected"
+show_help()
+{
+  echo "Usage: detector [OPTION...]"
+  echo "Detect DHCP requests in the network and publish to MQTT"
+  echo ""
+  echo "  -h                give this help list"
+  echo "  -b=[BROKER]       broker to use"
+  echo "  -t=[TOPIC]        topic to publish to"
+}
+
+broker="labict.be"
+topic="network/devices/detected"
+
+while getopts "hb:t:" option; do
+    case "$option" in
+    h)
+        show_help
+        exit 0
+        ;;
+    b)  broker=${OPTARG};;
+    t)  topic=${OPTARG};;
+    esac
+done
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script should probable be run as root"
+fi
 
 generate_json()
 {
@@ -40,7 +65,8 @@ tcpdump -i any port 67 or port 68 -len -vvv 2>/dev/null | while read line; do
             echo $(generate_json) | jq .
 
             # Send to MQTT broker
-            mosquitto_pub -V mqttv311 -h "${BROKER}" -t "${TOPIC}" -m "$(generate_json)" | jq .
+            echo "Publishing to ${broker} @ ${topic}"
+            mosquitto_pub -V mqttv311 -h "${broker}" -t "${topic}" -m "$(generate_json)" | jq .
         fi
         buffer=
     fi
