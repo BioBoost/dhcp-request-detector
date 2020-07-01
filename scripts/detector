@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+# Depencencies: awk, tcpdump, jq and mosquitto-clients
+
+# Based on a script created by Reavershark for Linux Essentials course
+# at VIVES University College.
+# https://github.com/Reavershark
+
+BROKER="localhost"
+TOPIC="network/devices/detected"
+
+generate_json()
+{
+cat <<EOF
+{
+    "time": "$(date)",
+    "mac": "$mac",
+    "ip": "$ip",
+    "hostname": $hostname
+}
+EOF
+}
+
+set buffer
+
+tcpdump -i any port 67 or port 68 -len -vvv 2>/dev/null | while read line; do
+    if [ ! "$line" = "END Option 255, length 0" ]; then
+        buffer+=$line
+        buffer+="\n"
+    elif echo -e $buffer | grep "Client-Ethernet-Address" &> /dev/null; then
+        if echo -e $buffer | grep "Requested-IP" &> /dev/null; then 
+            mac=$(echo -e $buffer | grep "Client-Ethernet-Address" | awk '{print $2}')
+            ip=$(echo -e $buffer | grep "Requested-IP" | awk '{print $6}')
+            hostname=$(echo -e $buffer | grep "Hostname" | awk '{print $6}')
+
+            # Hostname is not always provided
+            [ -z $hostname ] && hostname="\"unknown\""
+
+            echo "Intercepted DHCP Request:"
+            echo $(generate_json) | jq .
+
+            # Send to MQTT broker
+            mosquitto_pub -V mqttv311 -h "${BROKER}" -t "${TOPIC}" -m "$(generate_json)" | jq .
+        fi
+        buffer=
+    fi
+done
