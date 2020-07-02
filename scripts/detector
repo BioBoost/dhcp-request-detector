@@ -12,12 +12,12 @@ show_help()
   echo "Detect DHCP requests in the network and publish to MQTT"
   echo ""
   echo "  -h                give this help list"
-  echo "  -b=[BROKER]       broker to use"
-  echo "  -t=[TOPIC]        topic to publish to"
+  echo "  -b <broker>       broker to use"
+  echo "  -t <topic>        topic to publish to"
 }
 
-broker="labict.be"
-topic="network/devices/detected"
+[ -z $BROKER ] && BROKER="labict.be"
+[ -z $TOPIC ] && TOPIC="network/devices/detected"
 
 while getopts "hb:t:" option; do
     case "$option" in
@@ -25,10 +25,13 @@ while getopts "hb:t:" option; do
         show_help
         exit 0
         ;;
-    b)  broker=${OPTARG};;
-    t)  topic=${OPTARG};;
+    b)  BROKER=${OPTARG};;
+    t)  TOPIC=${OPTARG};;
     esac
 done
+
+# Remove options that have been parsed by getopts
+shift $((OPTIND -1))
 
 if [[ $EUID -ne 0 ]]; then
    echo "This script should probable be run as root"
@@ -45,6 +48,9 @@ cat <<EOF
 }
 EOF
 }
+
+echo "Listing for DHCP requests on the network"
+echo "Publishing findings to ${BROKER} @ ${TOPIC}"
 
 set buffer
 
@@ -65,8 +71,8 @@ tcpdump -i any port 67 or port 68 -len -vvv 2>/dev/null | while read line; do
             echo $(generate_json) | jq .
 
             # Send to MQTT broker
-            echo "Publishing to ${broker} @ ${topic}"
-            mosquitto_pub -V mqttv311 -h "${broker}" -t "${topic}" -m "$(generate_json)" | jq .
+            echo "Publishing to ${BROKER} @ ${TOPIC}"
+            mosquitto_pub -V mqttv311 -h "${BROKER}" -t "${TOPIC}" -m "$(generate_json)" | jq .
         fi
         buffer=
     fi
