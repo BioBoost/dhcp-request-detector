@@ -6,18 +6,12 @@ Runs in a docker container connected to the host's network.
 
 The detected requests are parsed and published via MQTT.
 
-## Using Docker
+## Run Docker Container
 
-Build the container
-
-```bash
-docker build -t detector .
-```
-
-Run the container
+Get the docker image from DockerHub and run it
 
 ```bash
-docker run -d --network=host detector
+docker run -d --network=host bioboost/dhcp-detector:v1.0
 ```
 
-Make sure to connect the container to the host network.
+Makes sure to connect the container to the host's network.
