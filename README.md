@@ -22,7 +22,7 @@ Example of published message:
 Get the docker image from DockerHub and run it
 
 ```bash
-docker run -d --network=host bioboost/dhcp-detector:v1.0
+docker run -d --restart unless-stopped --network=host bioboost/dhcp-detector:v1.0
 ```
 
 Make sure to connect the container to the host's network.
