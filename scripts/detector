@@ -49,7 +49,7 @@ cat <<EOF
 EOF
 }
 
-echo "Listing for DHCP requests on the network"
+echo "Listening for DHCP requests on the network"
 echo "Publishing findings to ${BROKER} @ ${TOPIC}"
 
 set buffer
