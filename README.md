@@ -19,6 +19,22 @@ Example of published message:
 
 ## Run Docker Container
 
+### Build
+
+Build the docker image using:
+
+```bash
+docker build -t dhcp-detector .
+```
+
+Running the image as a container:
+
+```bash
+docker run -it -e BROKER=mybroker -e TOPIC="my/cool/topic" --network=host --rm dhcp-detector
+```
+
+### From DockerHub
+
 Get the docker image from DockerHub and run it
 
 ```bash
