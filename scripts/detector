@@ -16,8 +16,8 @@ show_help()
   echo "  -t <topic>        topic to publish to"
 }
 
-[ -z $BROKER ] && BROKER="labict.be"
-[ -z $TOPIC ] && TOPIC="network/devices/detected"
+[ -z $MQTT_BROKER ] && MQTT_BROKER="labict.be"
+[ -z $MQTT_TOPIC ] && MQTT_TOPIC="network/devices/detected"
 
 while getopts "hb:t:" option; do
     case "$option" in
@@ -25,8 +25,8 @@ while getopts "hb:t:" option; do
         show_help
         exit 0
         ;;
-    b)  BROKER=${OPTARG};;
-    t)  TOPIC=${OPTARG};;
+    b)  MQTT_BROKER=${OPTARG};;
+    t)  MQTT_TOPIC=${OPTARG};;
     esac
 done
 
@@ -50,7 +50,7 @@ EOF
 }
 
 echo "Listening for DHCP requests on the network"
-echo "Publishing findings to ${BROKER} @ ${TOPIC}"
+echo "Publishing findings to ${MQTT_BROKER} @ ${MQTT_TOPIC}"
 
 set buffer
 
@@ -71,8 +71,8 @@ tcpdump -i any port 67 or port 68 -len -vvv 2>/dev/null | while read line; do
             echo $(generate_json) | jq .
 
             # Send to MQTT broker
-            echo "Publishing to ${BROKER} @ ${TOPIC}"
-            mosquitto_pub -V mqttv311 -h "${BROKER}" -t "${TOPIC}" -m "$(generate_json)" | jq .
+            echo "Publishing to ${MQTT_BROKER} @ ${MQTT_TOPIC}"
+            mosquitto_pub -V mqttv311 -h "${MQTT_BROKER}" -t "${MQTT_TOPIC}" -m "$(generate_json)" | jq .
         fi
         buffer=
     fi

@@ -30,7 +30,7 @@ docker build -t dhcp-detector .
 Running the image as a container:
 
 ```bash
-docker run -it -e BROKER=mybroker -e TOPIC="my/cool/topic" --network=host --rm dhcp-detector
+docker run -it -e MQTT_BROKER=mybroker -e MQTT_TOPIC="my/cool/topic" --network=host --rm dhcp-detector
 ```
 
 ### From DockerHub
@@ -46,7 +46,7 @@ Make sure to connect the container to the host's network.
 The broker and topic can be configured via environment variables:
 
 ```bash
-docker run -it -e BROKER=mybroker -e TOPIC="my/cool/topic" --network=host --rm bioboost/dhcp-detector:v1.0
+docker run -it -e MQTT_BROKER=mybroker -e MQTT_TOPIC="my/cool/topic" --network=host --rm bioboost/dhcp-detector:v1.0
 ```
 
 ## Running Script Locally
@@ -63,10 +63,10 @@ To configure the broker and topic one can pass these as arguments to the script:
 ./detector -b mybroker -t some/cool/topic
 ```
 
-or as environment variables `BROKER` and `TOPIC`:
+or as environment variables `MQTT_BROKER` and `MQTT_TOPIC`:
 
 ```bash
-BROKER=mybroker TOPIC=some/cool/topic ./detector
+MQTT_BROKER=mybroker MQTT_TOPIC=some/cool/topic ./detector
 ```
 
 The arguments passed to the script take precedence over the environment variables.
