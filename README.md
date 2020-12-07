@@ -38,7 +38,7 @@ docker run -it -e MQTT_BROKER=mybroker -e MQTT_TOPIC="my/cool/topic" --network=h
 Get the docker image from DockerHub and run it
 
 ```bash
-docker run -d --restart unless-stopped --network=host bioboost/dhcp-detector:v1.0
+docker run -d --restart unless-stopped --network=host bioboost/dhcp-detector:v1.1
 ```
 
 Make sure to connect the container to the host's network.
@@ -46,7 +46,7 @@ Make sure to connect the container to the host's network.
 The broker and topic can be configured via environment variables:
 
 ```bash
-docker run -it -e MQTT_BROKER=mybroker -e MQTT_TOPIC="my/cool/topic" --network=host --rm bioboost/dhcp-detector:v1.0
+docker run -it -e MQTT_BROKER=mybroker -e MQTT_TOPIC="my/cool/topic" --network=host --rm bioboost/dhcp-detector:v1.1
 ```
 
 ## Running Script Locally
