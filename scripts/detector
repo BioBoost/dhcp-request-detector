@@ -19,8 +19,8 @@ show_help() {
 
 [ -z $MQTT_BROKER ] && MQTT_BROKER="labict.be"
 [ -z $MQTT_TOPIC ] && MQTT_TOPIC="network/devices/detected"
-MQTT_USERNAME=""
-MQTT_PASSWORD=""
+[ -z $MQTT_USERNAME ] && MQTT_USERNAME=""
+[ -z $MQTT_PASSWORD ] && MQTT_PASSWORD=""
 
 while getopts "hb:t:u:p:" option; do
   case "$option" in
