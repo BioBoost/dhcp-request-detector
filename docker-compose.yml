@@ -1,0 +1,11 @@
+version: '3'
+services:
+  dhcp-detector:
+    build: .
+    environment:
+      - MQTT_BROKER=mybroker
+      - MQTT_TOPIC=my/cool/topic
+      - MQTT_USERNAME=username
+      - MQTT_PASSWORD=password
+    network_mode: host
+    restart: 'always'
