@@ -1,45 +1,57 @@
 #!/usr/bin/env bash
 
-# Depencencies: awk, tcpdump, jq and mosquitto-clients
+# Dependencies: awk, tcpdump, jq and mosquitto-clients
 
 # Based on a script created by Reavershark for Linux Essentials course
 # at VIVES University College.
 # https://github.com/Reavershark
 
-show_help()
-{
+show_help() {
   echo "Usage: detector [OPTION...]"
   echo "Detect DHCP requests in the network and publish to MQTT"
   echo ""
   echo "  -h                give this help list"
   echo "  -b <broker>       broker to use"
   echo "  -t <topic>        topic to publish to"
+  echo "  -u <username>     broker username (optional)"
+  echo "  -p <password>     broker password (optional)"
 }
 
 [ -z $MQTT_BROKER ] && MQTT_BROKER="labict.be"
 [ -z $MQTT_TOPIC ] && MQTT_TOPIC="network/devices/detected"
+[ -z $MQTT_USERNAME ] && MQTT_USERNAME=""
+[ -z $MQTT_PASSWORD ] && MQTT_PASSWORD=""
 
-while getopts "hb:t:" option; do
-    case "$option" in
+while getopts "hb:t:u:p:" option; do
+  case "$option" in
     h)
-        show_help
-        exit 0
-        ;;
-    b)  MQTT_BROKER=${OPTARG};;
-    t)  MQTT_TOPIC=${OPTARG};;
-    esac
+      show_help
+      exit 0
+      ;;
+    b)
+      MQTT_BROKER=${OPTARG}
+      ;;
+    t)
+      MQTT_TOPIC=${OPTARG}
+      ;;
+    u)
+      MQTT_USERNAME=${OPTARG}
+      ;;
+    p)
+      MQTT_PASSWORD=${OPTARG}
+      ;;
+  esac
 done
 
 # Remove options that have been parsed by getopts
-shift $((OPTIND -1))
+shift $((OPTIND - 1))
 
 if [[ $EUID -ne 0 ]]; then
-   echo "This script should probable be run as root"
+  echo "This script should probably be run as root"
 fi
 
-generate_json()
-{
-cat <<EOF
+generate_json() {
+  cat <<EOF
 {
     "time": "$(date)",
     "mac": "$mac",
@@ -55,25 +67,29 @@ echo "Publishing findings to ${MQTT_BROKER} @ ${MQTT_TOPIC}"
 set buffer
 
 tcpdump -i any port 67 or port 68 -len -vvv 2>/dev/null | while read line; do
-    if [ ! "$line" = "END Option 255, length 0" ]; then
-        buffer+=$line
-        buffer+="\n"
-    elif echo -e $buffer | grep "Client-Ethernet-Address" &> /dev/null; then
-        if echo -e $buffer | grep "Requested-IP" &> /dev/null; then 
-            mac=$(echo -e $buffer | grep "Client-Ethernet-Address" | awk '{print $2}')
-            ip=$(echo -e $buffer | grep "Requested-IP" | awk '{print $6}')
-            hostname=$(echo -e $buffer | grep "Hostname" | awk '{print $6}')
+  if [ ! "$line" = "END Option 255, length 0" ]; then
+    buffer+=$line
+    buffer+="\n"
+  elif echo -e $buffer | grep "Client-Ethernet-Address" &>/dev/null; then
+    if echo -e $buffer | grep "Requested-IP" &>/dev/null; then
+      mac=$(echo -e $buffer | grep "Client-Ethernet-Address" | awk '{print $2}')
+      ip=$(echo -e $buffer | grep "Requested-IP" | awk '{print $6}')
+      hostname=$(echo -e $buffer | grep "Hostname" | awk '{print $6}')
 
-            # Hostname is not always provided
-            [ -z $hostname ] && hostname="\"unknown\""
+      # Hostname is not always provided
+      [ -z $hostname ] && hostname="\"unknown\""
 
-            echo "Intercepted DHCP Request:"
-            echo $(generate_json) | jq .
+      echo "Intercepted DHCP Request:"
+      echo $(generate_json) | jq .
 
-            # Send to MQTT broker
-            echo "Publishing to ${MQTT_BROKER} @ ${MQTT_TOPIC}"
-            mosquitto_pub -V mqttv311 -h "${MQTT_BROKER}" -t "${MQTT_TOPIC}" -m "$(generate_json)" | jq .
-        fi
-        buffer=
+      # Send to MQTT broker
+      echo "Publishing to ${MQTT_BROKER} @ ${MQTT_TOPIC}"
+      if [ -n "$MQTT_USERNAME" ] && [ -n "$MQTT_PASSWORD" ]; then
+        mosquitto_pub -V mqttv311 -h "${MQTT_BROKER}" -t "${MQTT_TOPIC}" -u "${MQTT_USERNAME}" -P "${MQTT_PASSWORD}" -m "$(generate_json)" | jq .
+      else
+        mosquitto_pub -V mqttv311 -h "${MQTT_BROKER}" -t "${MQTT_TOPIC}" -m "$(generate_json)" | jq .
+      fi
     fi
+    buffer=
+  fi
 done
